@@ -10,6 +10,8 @@ defmodule ExDoc.Formatter.APIDOCS do
   """
   @spec run(list, ExDoc.Config.t) :: String.t
   def run(_project_nodes, config) when is_map(config) do
+    Mix.shell.info "running apidocs ..."
+    Mix.shell.info "config: #{inspect Mix.Project.config}"
     prepare_docsoutput()
     filter_func = apidocs_config() |> Keyword.get(:filter, &always_include_filter/1)
     apidocs_config()
@@ -92,7 +94,7 @@ defmodule ExDoc.Formatter.APIDOCS do
     case File.ls(snippetsoutput()) do
       {:ok, files} ->
         files
-        |> Enum.filter(fn(path) -> String.starts_with?(Path.basename(path), "#{module}.#{handler_func}") end)
+        |> Enum.filter(fn(path) -> String.starts_with?(Path.basename(path), "#{module}.#{handler_func}-") end)
         |> Enum.filter(fn(path) -> String.ends_with?(Path.basename(path), ".request") end)
         |> Enum.map(&(File.read!(Path.join(snippetsoutput(),&1))))
       {:error, reason} ->
@@ -105,7 +107,7 @@ defmodule ExDoc.Formatter.APIDOCS do
     case File.ls(snippetsoutput()) do
       {:ok, files} ->
         files
-        |> Enum.filter(fn(path) -> String.starts_with?(Path.basename(path), "#{module}.#{handler_func}") end)
+        |> Enum.filter(fn(path) -> String.starts_with?(Path.basename(path), "#{module}.#{handler_func}-") end)
         |> Enum.filter(fn(path) -> String.ends_with?(Path.basename(path), ".response") end)
         |> Enum.map(&(File.read!(Path.join(snippetsoutput(),&1))))
       {:error, reason} ->
@@ -142,6 +144,7 @@ defmodule ExDoc.Formatter.APIDOCS do
     apiGroupData   = Map.get(parsed_block, :apiGroup, section) |> make_list
     apiDescData    = Map.get(parsed_block, :apiDescription) |> replace_empty_desc(apiTitle) |> make_list
     apiVersionData = Map.get(parsed_block, :apiVersion, "#{apidocs_json_config["version"]}") |> make_list
+    apiUseData     = Map.get(parsed_block, :apiUse, []) |> make_list
 
     apiExampleData         = all_example_requests(config, route)  |> make_list |> multiline_possible(prefix, separator)
     apiExampleResponseData = all_example_responses(config, route) |> make_list |> multiline_possible(prefix, separator)
@@ -152,6 +155,7 @@ defmodule ExDoc.Formatter.APIDOCS do
     apiName    = EEx.eval_string(template, bindings |> Keyword.put(:param, "@apiName")        |> Keyword.put(:data, apiNameData))
     apiDesc    = EEx.eval_string(template, bindings |> Keyword.put(:param, "@apiDescription") |> Keyword.put(:tag_first_only, true) |> Keyword.put(:data, apiDescData))
     apiVersion = EEx.eval_string(template, bindings |> Keyword.put(:param, "@apiVersion")     |> Keyword.put(:data, apiVersionData))
+    apiUse     = EEx.eval_string(template, bindings |> Keyword.put(:param, "@apiUse")         |> Keyword.put(:data, apiUseData))
 
     apiExamples         = EEx.eval_string(template, bindings |> Keyword.put(:param, "@apiExample") |> Keyword.put(:data, apiExampleData))
     apiExampleResponses = EEx.eval_string(template, bindings |> Keyword.put(:param, "@apiSuccessExample") |> Keyword.put(:data, apiExampleResponseData))
@@ -164,6 +168,7 @@ defmodule ExDoc.Formatter.APIDOCS do
     #{apiParams}\
     #{apiName}\
     #{apiVersion}\
+    #{apiUse}\
     #{apiExamples}\
     #{apiExampleResponses}\
      */
