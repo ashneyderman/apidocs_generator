@@ -4,16 +4,16 @@ defmodule Apidocs.Utils do
     do: Mix.Project.config |> Keyword.get(:docs, []) |> Keyword.get(:formatter_opts, []) |> Keyword.get(:apidocs, [])
 
   def docsroot,
-    do: apidocs_config |> Keyword.get(:docsroot, "apidocs")
+    do: apidocs_config() |> Keyword.get(:docsroot, "apidocs")
 
   def docsoutput,
-    do: apidocs_config |> Keyword.get(:docsoutput, "_build/apidocs")
+    do: apidocs_config() |> Keyword.get(:docsoutput, "_build/apidocs")
 
   def snippetsoutput,
-    do: apidocs_config |> Keyword.get(:snippetsoutput, "_build/snippets")
+    do: apidocs_config() |> Keyword.get(:snippetsoutput, "_build/snippets")
 
   def apidocs_json do
-    apidocs_json_path = Path.absname("apidoc.json", docsroot)
+    apidocs_json_path = Path.absname("apidoc.json", docsroot())
     if File.exists?(apidocs_json_path) do
       Poison.decode!(File.read!(apidocs_json_path))
     else

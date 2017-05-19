@@ -13,15 +13,15 @@ defmodule Apidocs.SnippetsGenerator do
 #    IO.puts "snippet opts: #{inspect opts, pretty: true}"
 
     name              = opts |> Keyword.get(:name, "Example")
-    :ok               = Mix.Generator.create_directory(snippetsoutput)
+    :ok               = Mix.Generator.create_directory(snippetsoutput())
 
     controller        = Map.get(conn, :private, %{}) |> Map.get(:phoenix_controller)
     action            = Map.get(conn, :private, %{}) |> Map.get(:phoenix_action)
 
-    snippet_req_path  = Path.absname("#{controller}.#{action}-#{name}.curl.request", snippetsoutput)
-    snippet_resp_path = Path.absname("#{controller}.#{action}-#{name}.curl.response", snippetsoutput)
-    request_snippet   = do_generate_request_snippet(conn, opts, apidocs_json)
-    response_snippet  = do_generate_response_snippet(conn, opts, apidocs_json)
+    snippet_req_path  = Path.absname("#{controller}.#{action}-#{name}.curl.request", snippetsoutput())
+    snippet_resp_path = Path.absname("#{controller}.#{action}-#{name}.curl.response", snippetsoutput())
+    request_snippet   = do_generate_request_snippet(conn, opts, apidocs_json())
+    response_snippet  = do_generate_response_snippet(conn, opts, apidocs_json())
 
     write_snippet(snippet_req_path, request_snippet, opts)
     write_snippet(snippet_resp_path, response_snippet, opts)
@@ -81,14 +81,14 @@ defmodule Apidocs.SnippetsGenerator do
   end
 
   defp is_json_response(conn) do
-    headers_map = conn.resp_headers |> Enum.into(HashDict.new)
+    headers_map = conn.resp_headers |> Enum.into(%{})
     key = headers_map
-          |> Dict.keys
+          |> Map.keys
           |> Enum.find(nil, &(String.downcase(&1) == "content-type"))
 
     if key do
       headers_map
-      |> Dict.get(key, "")
+      |> Map.get(key, "")
       |> String.downcase
       |> String.starts_with?("application/json")
     else

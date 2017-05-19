@@ -10,21 +10,21 @@ defmodule ExDoc.Formatter.APIDOCS do
   """
   @spec run(list, ExDoc.Config.t) :: String.t
   def run(_project_nodes, config) when is_map(config) do
-    prepare_docsoutput
-    filter_func = apidocs_config |> Keyword.get(:filter, &always_include_filter/1)
-    apidocs_config
+    prepare_docsoutput()
+    filter_func = apidocs_config() |> Keyword.get(:filter, &always_include_filter/1)
+    apidocs_config()
     |> Keyword.get(:routers, [])
     |> Enum.flat_map(fn(route) -> (route.__routes__ |> Enum.filter(filter_func)) end)
     |> Enum.map(&find_docs/1)
-    |> Enum.map(fn(rdoc) -> generate_apidocs(rdoc, apidocs_config) end)
+    |> Enum.map(fn(rdoc) -> generate_apidocs(rdoc, apidocs_config()) end)
 
-    "#{Path.absname(docsoutput)}"
+    "#{Path.absname(docsoutput())}"
   end
 
   defp prepare_docsoutput do
-    File.rm_rf!(docsoutput)
-    :ok = Mix.Generator.create_directory(docsoutput)
-    copy(docsroot, docsoutput)
+    File.rm_rf!(docsoutput())
+    :ok = Mix.Generator.create_directory(docsoutput())
+    copy(docsroot(), docsoutput())
   end
 
   defp always_include_filter(%Phoenix.Router.Route{}), do: true
@@ -89,27 +89,27 @@ defmodule ExDoc.Formatter.APIDOCS do
   end
 
   defp all_example_requests(_config, %{opts: handler_func, plug: module}) do
-    case File.ls(snippetsoutput) do
+    case File.ls(snippetsoutput()) do
       {:ok, files} ->
         files
         |> Enum.filter(fn(path) -> String.starts_with?(Path.basename(path), "#{module}.#{handler_func}") end)
         |> Enum.filter(fn(path) -> String.ends_with?(Path.basename(path), ".request") end)
-        |> Enum.map(&(File.read!(Path.join(snippetsoutput,&1))))
+        |> Enum.map(&(File.read!(Path.join(snippetsoutput(),&1))))
       {:error, reason} ->
-        Mix.shell.error "Unable to list files in snippets output directory #{snippetsoutput} - #{inspect reason, pretty: true}. Make sure you ran the tests that generate the examples before you try to generate apidocs"
+        Mix.shell.error "Unable to list files in snippets output directory #{snippetsoutput()} - #{inspect reason, pretty: true}. Make sure you ran the tests that generate the examples before you try to generate apidocs"
         []
     end
   end
 
   defp all_example_responses(_config, %{opts: handler_func, plug: module}) do
-    case File.ls(snippetsoutput) do
+    case File.ls(snippetsoutput()) do
       {:ok, files} ->
         files
         |> Enum.filter(fn(path) -> String.starts_with?(Path.basename(path), "#{module}.#{handler_func}") end)
         |> Enum.filter(fn(path) -> String.ends_with?(Path.basename(path), ".response") end)
-        |> Enum.map(&(File.read!(Path.join(snippetsoutput,&1))))
+        |> Enum.map(&(File.read!(Path.join(snippetsoutput(),&1))))
       {:error, reason} ->
-        Mix.shell.error "Unable to list files in snippets output directory #{snippetsoutput} - #{inspect reason, pretty: true}. Make sure you ran the tests that generate the examples before you try to generate apidocs"
+        Mix.shell.error "Unable to list files in snippets output directory #{snippetsoutput()} - #{inspect reason, pretty: true}. Make sure you ran the tests that generate the examples before you try to generate apidocs"
         []
     end
   end
@@ -118,7 +118,7 @@ defmodule ExDoc.Formatter.APIDOCS do
                           path: path,
                           helper: section,
                           opts: handler_func}=route, doc}, config) do
-    apidocs_json_config = apidocs_json
+    apidocs_json_config = apidocs_json()
     parsed_block = Apidocs.Parser.parse(doc)
 
     # keep formatted template here. the one that is used in the code is devoid of spaces (all lines are joined).
@@ -156,7 +156,7 @@ defmodule ExDoc.Formatter.APIDOCS do
     apiExamples         = EEx.eval_string(template, bindings |> Keyword.put(:param, "@apiExample") |> Keyword.put(:data, apiExampleData))
     apiExampleResponses = EEx.eval_string(template, bindings |> Keyword.put(:param, "@apiSuccessExample") |> Keyword.put(:data, apiExampleResponseData))
 
-    File.write! Path.join(docsoutput, "#{section}.js"),"""
+    File.write! Path.join(docsoutput(), "#{section}.js"),"""
     /**
     #{apiGroup}\
     #{api}\
