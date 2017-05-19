@@ -1,3 +1,8 @@
+Build Status
+========
+
+[![Build Status](https://semaphoreci.com/api/v1/ashneyderman/apidocs_generator/branches/master/badge.svg)](https://semaphoreci.com/ashneyderman/apidocs_generator)
+
 # ApidocsGenerator
 
 **TODO: Add description**

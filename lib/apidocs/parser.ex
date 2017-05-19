@@ -37,7 +37,6 @@ defmodule Apidocs.Parser do
 
   defp parse_line(nil, ""),                         do: :skip
   defp parse_line(nil, data),                       do: {:apiTitle, data}
-  defp parse_line(:apiTitle, data),                 do: {:apiDescription, data}
   defp parse_line(_, "@api " <> data),              do: {:api, data}
   defp parse_line(_, "@apiDeprecated" <> data),     do: {:apiDeprecated, data}
   defp parse_line(_, "@apiDescription" <> data),    do: {:apiDescription, data}
@@ -57,6 +56,7 @@ defmodule Apidocs.Parser do
   defp parse_line(_, "@apiSuccessExample" <> data), do: {:apiSuccessExample, data}
   defp parse_line(_, "@apiUse" <> data),            do: {:apiUse, data}
   defp parse_line(_, "@apiVersion" <> data),        do: {:apiVersion, data}
+  defp parse_line(:apiTitle, data),                 do: {:apiDescription, data}
   defp parse_line(_, data),                         do: {nil, data}
 
   @overrides [:apiTitle, :apiDescription, :apiVersion, :apiName, :apiGroup, :api]

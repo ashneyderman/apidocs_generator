@@ -10,17 +10,6 @@ defmodule ExDoc.Formatter.APIDOCS do
   """
   @spec run(list, ExDoc.Config.t) :: String.t
   def run(_project_nodes, config) when is_map(config) do
-    #IO.puts "ALEX config: #{inspect config, pretty: true}"
-    #IO.puts "ALEX  nodes: #{inspect project_nodes, pretty: true}"
-
-#    build_path = Mix.Project.build_path
-#    app_path   = Mix.Project.app_path
-#    cfg = Mix.Project.config
-#    IO.puts "build_path: #{inspect build_path, pretty: true}"
-#    IO.puts "  app_path: #{inspect app_path, pretty: true}"
-#    IO.puts "    config: #{inspect cfg, pretty: true}"
-#    IO.puts "    apidocs_config: #{inspect apidocs_config, pretty: true}"
-
     prepare_docsoutput
     filter_func = apidocs_config |> Keyword.get(:filter, &always_include_filter/1)
     apidocs_config
@@ -70,7 +59,6 @@ defmodule ExDoc.Formatter.APIDOCS do
 #   kind: :match, opts: :upload, path: "/api/fileupload", pipe_through: [:api],
 #   plug: Beginnings.FileuploadController, private: %{}, verb: :post},
 #  "Upload document and display its content\n"}]
-
 
 #/**
 # * @api {post} /accounts/:id/contact contact us
@@ -132,18 +120,16 @@ defmodule ExDoc.Formatter.APIDOCS do
                           opts: handler_func}=route, doc}, config) do
     apidocs_json_config = apidocs_json
     parsed_block = Apidocs.Parser.parse(doc)
-#    IO.puts "route: #{inspect route, pretty: true}"
-#    IO.puts "config: #{inspect config, pretty: true}"
-#    IO.puts "#{handler_func}: #{inspect parsed_block, pretty: true}"
 
-#    template = "
-#    <%= for {idx, line} <- data do %>
-#      <%= if tag_first_only && idx > 0 do %>
-#        <%= prefix %> <%= line %><%= separator %>
-#      <% else %>
-#        <%= prefix %><%= param %> <%= line %><%= separator %>
-#      <% end %>
-#    <% end %>"
+    # keep formatted template here. the one that is used in the code is devoid of spaces (all lines are joined).
+    #    template = "
+    #    <%= for {idx, line} <- data do %>
+    #      <%= if tag_first_only && idx > 0 do %>
+    #        <%= prefix %> <%= line %><%= separator %>
+    #      <% else %>
+    #        <%= prefix %><%= param %> <%= line %><%= separator %>
+    #      <% end %>
+    #    <% end %>"
     template  = "<%= for {idx, d} <- data do %><%= prefix %><%= if tag_first_only && idx > 0 do %><%= d %><%= separator %><% else %><%= param %> <%= d %><%= separator %><% end %><% end %>"
     prefix    = " * "
     separator = "\n"
