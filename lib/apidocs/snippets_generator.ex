@@ -23,11 +23,7 @@ defmodule Apidocs.SnippetsGenerator do
     request_snippet   = do_generate_request_snippet(conn, opts, apidocs_json())
     response_snippet  = do_generate_response_snippet(conn, opts, apidocs_json())
 
-    write_snippet(snippet_req_path, request_snippet, opts)
-    write_snippet(snippet_resp_path, response_snippet, opts)
-
-    if request_snippet,  do: File.write!(snippet_req_path, request_snippet)
-    if response_snippet, do: File.write!(snippet_resp_path, response_snippet)
+    write_snippet(snippet_req_path, Enum.join([request_snippet, response_snippet], ""), opts)
   end
 
   defp write_snippet(_file, nil, _opts), do: :ok
@@ -71,7 +67,7 @@ defmodule Apidocs.SnippetsGenerator do
     pretty_body = body |> Poison.decode! |> Poison.encode!(pretty: true)
     """
      \\
-    --data-binary @-<<EOF
+      --data-binary @-<<EOF
     #{pretty_body}
     EOF
     """
@@ -96,14 +92,14 @@ defmodule Apidocs.SnippetsGenerator do
     end
   end
 
-  defp do_generate_response_status_line(conn, _opts),
-    do: "HTTP/1.1 #{conn.status} #{Plug.Conn.Status.reason_phrase(conn.status)}"
+  defp do_generate_response_status_line(conn, opts),
+    do: "\n#{Keyword.get(opts, :prefix, "> ")}HTTP/1.1 #{conn.status} #{Plug.Conn.Status.reason_phrase(conn.status)}"
 
-  defp do_generate_response_headers(conn, _opts) do
+  defp do_generate_response_headers(conn, opts) do
     if conn.resp_headers do
       headers = conn.resp_headers
                 |> Enum.map(fn({name, value}) ->
-                              "#{name}: #{value}"
+                              "#{Keyword.get(opts, :prefix, "> ")}#{name}: #{value}"
                             end)
                 |> Enum.join("\n")
       "\n#{headers}"
@@ -112,21 +108,31 @@ defmodule Apidocs.SnippetsGenerator do
     end
   end
 
-  defp do_generate_response_body(conn, false), do:
+  defp do_generate_response_body(conn, false, _opts), do:
     "\n\n#{conn.resp_body}"
 
-  defp do_generate_response_body(conn, true) do
+  defp do_generate_response_body(conn, true, opts) do
+    line_prefix = Keyword.get(opts, :prefix, "> ")
     try do
-      body = Poison.decode!(conn.resp_body) |> Poison.encode!(pretty: true)
-      "\n\n#{body}"
+      body = conn.resp_body
+             |> Poison.decode!
+             |> Poison.encode!(pretty: true)
+             |> String.split("\n")
+             |> Enum.map(fn(line) -> "#{line_prefix}#{line}" end)
+             |> Enum.join("\n")
+      "\n#{line_prefix}\n#{body}"
     rescue
       _ in [Poison.SyntaxError] ->
-        "\n\n#{conn.resp_body}"
+        ctx = conn.resp_body
+              |> String.split("\n")
+              |> Enum.map(fn(line) -> "#{line_prefix}#{line}" end)
+              |> Enum.join("\n")
+        "\n#{line_prefix}\n#{ctx}"
       end
   end
 
-  defp do_generate_response_body(conn, _opts),
-    do: do_generate_response_body(conn, is_json_response(conn))
+  defp do_generate_response_body(conn, opts),
+    do: do_generate_response_body(conn, is_json_response(conn), opts)
 
 #    resp_decoded = if is_json_response(resp_headers) do
 #      d = try do
@@ -161,16 +167,14 @@ defmodule Apidocs.SnippetsGenerator do
 #    end
 
   defp do_generate_response_snippet(conn, opts, _apidocs_json) do
-    name                 = opts |> Keyword.get(:name, "Example")
     response_status_line = do_generate_response_status_line(conn, opts)
     response_headers     = do_generate_response_headers(conn, opts)
     response_body        = do_generate_response_body(conn, opts)
 
     """
-    {curl} #{name}:
     #{response_status_line}\
     #{response_headers}\
-    #{response_body}
+    #{response_body}\
     """
   end
 
@@ -210,7 +214,7 @@ defmodule Apidocs.SnippetsGenerator do
 
     """
     {curl} #{name}:
-    curl -k -v -X #{method} #{url}#{req_path}#{query}\
+    > curl -k -v -X #{method} #{url}#{req_path}#{query}\
     #{headers}\
     #{body}\
     """
