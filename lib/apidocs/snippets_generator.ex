@@ -36,7 +36,7 @@ defmodule Apidocs.SnippetsGenerator do
 
   defp do_generate_request_headers(conn, _opts) do
     req_headers = conn.req_headers
-    Logger.error "req_headers: #{inspect req_headers, pretty: true}"
+    Logger.debug "req_headers: #{inspect req_headers, pretty: true}"
     if req_headers do
       headers = req_headers
                 |> Enum.map(fn({name, value}) ->
