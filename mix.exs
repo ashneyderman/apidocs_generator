@@ -16,8 +16,8 @@ defmodule ApidocsGenerator.Mixfile do
 
   defp deps do
     [
-      {:phoenix, "~> 1.2.0"},
-      {:poison,  "~> 2.0" },
+      {:phoenix, "~> 1.3"},
+      {:poison,  "~> 3.1" },
     ]
   end
 end
